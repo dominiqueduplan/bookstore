@@ -1,0 +1,24 @@
+{
+    "products": [
+        {
+            "id" : "produit1",
+            "name" : "Nom du produit 1",
+            "description" : "description du produit 1" ,
+            "USD_price" : 10.50,
+            "EUR_price" : 8.30,
+            "file_link" : "",
+            "creation_date": "",
+            "orders_counter":0
+        },
+        {
+            "id" : "produit2",
+            "name" : "Nom du produit 2",
+            "description" : "description du produit 2" ,
+            "USD_price" : 11.50,
+            "EUR_price" : 9.30,
+            "file_link" : "",
+            "creation_date": "",
+            "orders_counter":0
+        }
+    ]
+}
