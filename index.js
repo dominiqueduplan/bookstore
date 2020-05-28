@@ -1,50 +1,52 @@
+const express = require('express')
 let fs = require("fs")
 let path = require("path")
-let readline = require('readline')
+var bodyParser = require("body-parser")
+let Products = require("./models/products")
+let Users = require("./models/users")
 
-function getAllProducts(callback) {
-    fs.readFile(path.join(__dirname,"products.json"), "utf8", (err,contents) => {
-        if (err) return callback(err)
-        try {
-            var products = JSON.parse(contents).products ; 
-            console.log("Bienvenue. Voici les produits disponibles")   
-            products.forEach(product => {
-                console.log(product.id, "-",product.name,"/",product.EUR_price/100,"/",product.orders_counter)
-            });
-            return callback(null, products)
-        } catch (error) {
-           return callback(error)
-        }   
+const app = express()
+const port = 8080
+
+app.use(express.static('public'));
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.set("view engine", "ejs")
+app.set("views", path.join(__dirname,"views"))
+
+
+app.get('/', (req, res) => {
+    Products.getAllProducts((err,products) => {
+        if (err) return res.send('erreur')
+        res.render('homepage',{products: products})
     })
+})
+
+function connected(req, res, next) {
+    var email = req.body.email;
+    var password = req.body.password;
+      
+    if (email!="" && password!="") {
+        Users.login(email, password, (err,user) => {
+            if (err) return res.send({"error_text":"incorrect_password"})
+            next();
+        })
+    } else {
+        return res.send({"error_text":"need_connection"})    
+    }
+    
 }
 
-function orderProductById(id) {
-    getAllProducts((err, products) => {
-        var link;
-        products.forEach(product => {
-             if (product.id == id) {
-                product.orders_counter++;
-                link = product.file_link;
-            }
-        });
-        let new_products = {"products" : products}
-        fs.writeFile(path.join(__dirname,"products.json"), JSON.stringify(new_products, null, 4), (err) => {
-            if (err) throw err;
-            console.log('Commande terminée! Voici votre fichier',link);
-        });
+app.post('/order/:id', connected, (req, res) => {
+    
+    var id = req.params.id
+ 
+
+    Products.orderProductById(id, (err, commande) => {
+        if (err) return res.send({"error_text":"erreur dans la commande"});
+        return res.send({"error_text":"commande terminée "+ commande})
     })
-    }
-
-
-//getAllProducts();
-//orderProductById("produit2")
-
-var rl = readline.createInterface({'input': process.stdin, output: process.stdout, terminal:false })
-
-rl.on('line', function (line) {
-    if (line.includes("i want product")) {
-        let line_info = line.split(" ")
-        let product_id = line_info[line_info.length-1];
-        orderProductById(product_id)
-    }
 })
+
+app.listen(port, () => console.log(`Serveur lancé sur le port ${port}`))
